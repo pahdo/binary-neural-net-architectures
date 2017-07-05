@@ -310,7 +310,8 @@ def inference(images):
     dim = reshape.get_shape()[1].value
     weights = _variable_with_weight_decay('weights', shape=[dim, 384],
                                           stddev=0.04, wd=0.004)
-    local3 = binFullyConnected(reshape, weights)
+    # local3 = binFullyConnected(reshape, weights) # training
+    local3 = binFullyConnected(reshape, weights, False) # testing
     _activation_summary(local3)
   """ End of binarized local 3 """
 
@@ -330,7 +331,8 @@ def inference(images):
     weights = _variable_with_weight_decay('weights', shape=[384, 192],
                                           stddev=0.04, wd=0.004)
     biases = _variable_on_cpu('biases', [192], tf.constant_initializer(0.1))
-    local4 = binFullyConnected(local3, weights)
+    # local4 = binFullyConnected(local3, weights) # training
+    local4 = binFullyConnected(local3, weights, False) # testing
     _activation_summary(local4)
   """ End of binarized local 4 """
 
