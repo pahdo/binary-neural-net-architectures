@@ -326,7 +326,7 @@ def inference(images):
   """ End of original local 4 """
 
   """ Testing ... binarized local 4 """
-  local4
+  # local4
   with tf.variable_scope('local4') as scope:
     weights = _variable_with_weight_decay('weights', shape=[384, 192],
                                           stddev=0.04, wd=0.004)
