@@ -204,15 +204,15 @@ def inference(images):
 
   def binConvolution(input, kernel, stride, padding, phase=True):
     batchnorm = tf.contrib.layers.batch_norm(input, center=True, scale=True, is_training=phase)
-    activ = tf.sign(input) * tf.divide(tf.norm(input, 1), tf.size(input)) # new + added scaling
-    kernel = tf.sign(kernel) * tf.divide(tf.norm(kernel, 1), tf.size(kernel)) # new + added scaling
+    activ = tf.sign(input) * tf.divide(tf.norm(input, 1), tf.cast(tf.size(input), dtype=tf.float32)) # new + added scaling, added cast
+    kernel = tf.sign(kernel) * tf.divide(tf.norm(kernel, 1), tf.cast(tf.size(kernel), dtype=tf.float32)) # new + added scaling, added cast
     conv = tf.nn.conv2d(input, kernel, stride, padding) # conv = tf.nn.conv2d(norm1, kernel, [1, 1, 1, 1], padding='SAME')
     return conv
 
   def binFullyConnected(reshape, weights, phase=True):
     batchnorm = tf.contrib.layers.batch_norm(reshape, center=True, scale=True, is_training=phase)
-    activ = tf.sign(reshape) * tf.divide(tf.norm(reshape, 1), tf.size(reshape)) # add scaling
-    local = tf.matmul(activ, tf.sign(weights)) * tf.divide(tf.norm(weights, 1), tf.size(weights)) # added scaling
+    activ = tf.sign(reshape) * tf.divide(tf.norm(reshape, 1), tf.cast(tf.size(reshape), dtype=tf.float32)) # add scaling
+    local = tf.matmul(activ, tf.sign(weights)) * tf.divide(tf.norm(weights, 1), tf.cast(tf.size(weights), dtype=tf.float32)) # added scaling
     return local
 
   """ Original conv layer 1 """
