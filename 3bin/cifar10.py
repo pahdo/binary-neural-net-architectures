@@ -255,55 +255,42 @@ def inference(images):
   """ End of binarized conv layer 1 """
 
   """ Original conv layer 2 """
-  # # conv2
-  # with tf.variable_scope('conv2') as scope:
-  #   kernel = _variable_with_weight_decay('weights',
-  #                                        shape=[5, 5, 64, 64],
-  #                                        stddev=5e-2,
-  #                                        wd=0.0)
-  #   conv = tf.nn.conv2d(norm1, kernel, [1, 1, 1, 1], padding='SAME')
-  #   biases = _variable_on_cpu('biases', [64], tf.constant_initializer(0.1))
-  #   pre_activation = tf.nn.bias_add(conv, biases)
-  #   conv2 = tf.nn.relu(pre_activation, name=scope.name)
-  #   _activation_summary(conv2)
-
-  # # norm2
-  # norm2 = tf.nn.lrn(conv2, 4, bias=1.0, alpha=0.001 / 9.0, beta=0.75,
-  #                   name='norm2')
-  # # pool2
-  # pool2 = tf.nn.max_pool(norm2, ksize=[1, 3, 3, 1],
-  #                        strides=[1, 2, 2, 1], padding='SAME', name='pool2')
-  """ End of original layer 1 """ 
-
-  """ Testing... binarized conv layer 2 """
   # conv2
-  with tf.variable_scope('bconv2') as scope:
+  with tf.variable_scope('conv2') as scope:
     kernel = _variable_with_weight_decay('weights',
                                          shape=[5, 5, 64, 64],
                                          stddev=5e-2,
                                          wd=0.0)
-    conv2 = binConvolution(norm1, kernel, [1, 1, 1, 1], 'SAME')
+    conv = tf.nn.conv2d(norm1, kernel, [1, 1, 1, 1], padding='SAME')
+    biases = _variable_on_cpu('biases', [64], tf.constant_initializer(0.1))
+    pre_activation = tf.nn.bias_add(conv, biases)
+    conv2 = tf.nn.relu(pre_activation, name=scope.name)
     _activation_summary(conv2)
 
+  # norm2
+  norm2 = tf.nn.lrn(conv2, 4, bias=1.0, alpha=0.001 / 9.0, beta=0.75,
+                    name='norm2')
   # pool2
-  pool2 = tf.nn.max_pool(conv2, ksize=[1, 3, 3, 1],
+  pool2 = tf.nn.max_pool(norm2, ksize=[1, 3, 3, 1],
                          strides=[1, 2, 2, 1], padding='SAME', name='pool2')
+  """ End of original layer 1 """ 
+
+  """ Testing... binarized conv layer 2 """
+  # # conv2
+  # with tf.variable_scope('bconv2') as scope:
+  #   kernel = _variable_with_weight_decay('weights',
+  #                                        shape=[5, 5, 64, 64],
+  #                                        stddev=5e-2,
+  #                                        wd=0.0)
+  #   conv2 = binConvolution(norm1, kernel, [1, 1, 1, 1], 'SAME')
+  #   _activation_summary(conv2)
+
+  # # pool2
+  # pool2 = tf.nn.max_pool(conv2, ksize=[1, 3, 3, 1],
+  #                        strides=[1, 2, 2, 1], padding='SAME', name='pool2')
   """ End of binarized conv layer 2 """
 
   """ Original local 3 """
-  # local3
-  with tf.variable_scope('local3') as scope:
-    # Move everything into depth so we can perform a single matrix multiply.
-    reshape = tf.reshape(pool2, [FLAGS.batch_size, -1])
-    dim = reshape.get_shape()[1].value
-    weights = _variable_with_weight_decay('weights', shape=[dim, 384],
-                                          stddev=0.04, wd=0.004)
-    biases = _variable_on_cpu('biases', [384], tf.constant_initializer(0.1))
-    local3 = tf.nn.relu(tf.matmul(reshape, weights) + biases, name=scope.name)
-    _activation_summary(local3)
-  """ End of original local 3 """
-
-  """ Testing... binarized local 3 """
   # # local3
   # with tf.variable_scope('local3') as scope:
   #   # Move everything into depth so we can perform a single matrix multiply.
@@ -311,8 +298,21 @@ def inference(images):
   #   dim = reshape.get_shape()[1].value
   #   weights = _variable_with_weight_decay('weights', shape=[dim, 384],
   #                                         stddev=0.04, wd=0.004)
-  #   local3 = binFullyConnected(reshape, weights)
+  #   biases = _variable_on_cpu('biases', [384], tf.constant_initializer(0.1))
+  #   local3 = tf.nn.relu(tf.matmul(reshape, weights) + biases, name=scope.name)
   #   _activation_summary(local3)
+  """ End of original local 3 """
+
+  """ Testing... binarized local 3 """
+  # local3
+  with tf.variable_scope('local3') as scope:
+    # Move everything into depth so we can perform a single matrix multiply.
+    reshape = tf.reshape(pool2, [FLAGS.batch_size, -1])
+    dim = reshape.get_shape()[1].value
+    weights = _variable_with_weight_decay('weights', shape=[dim, 384],
+                                          stddev=0.04, wd=0.004)
+    local3 = binFullyConnected(reshape, weights)
+    _activation_summary(local3)
   """ End of binarized local 3 """
 
   """ Original local 4 """
