@@ -230,7 +230,7 @@ def inference(images):
 
   norm1 = tf.nn.lrn(conv1, 4, bias=1.0, alpha=0.001 / 9.0, beta=0.75, name='norm1')
 
-  """ Binarized conv layer 2 """
+  """ Conv layer 2 """
 
   with tf.variable_scope('conv2') as scope:
     kernel = _variable_with_weight_decay('weights',
@@ -245,50 +245,74 @@ def inference(images):
 
   norm2 = tf.nn.lrn(conv2, 4, bias=1.0, alpha=0.001 / 9.0, beta=0.75, name='norm2')
 
-  """ Binarized conv layer 3 - r = 2"""
+  """ Conv layer 3 - r = 2"""
   with tf.variable_scope('conv3') as scope:
     kernel = _variable_with_weight_decay('weights',
-					 shape=[3, 3, 96, 96],
+                                         shape=[3, 3, 96, 96],
                                          stddev=5e-2,
                                          wd=0.0)
-    conv3 = binConvolution(conv2, kernel, [1, 2, 2, 1], 'SAME')
+    conv = tf.nn.conv2d(norm2, kernel, [1, 2, 2, 1], padding='SAME')
+    biases = _variable_on_cpu('biases', [96], tf.constant_initializer(0.0))
+    pre_activation = tf.nn.bias_add(conv, biases)
+    conv3 = tf.nn.relu(pre_activation, name=scope.name)
     _activation_summary(conv3)
 
-  """ Binarized conv layer 4 """
+  norm3 = tf.nn.lrn(conv3, 4, bias=1.0, alpha=0.001 / 9.0, beta=0.75, name='norm3')
+  """ Conv layer 4 """
   with tf.variable_scope('conv4') as scope:
     kernel = _variable_with_weight_decay('weights',
-					 shape=[3, 3, 96, 192],
+                                         shape=[3, 3, 96, 192],
                                          stddev=5e-2,
                                          wd=0.0)
-    conv4 = binConvolution(conv3, kernel, [1, 1, 1, 1], 'SAME')
+    conv = tf.nn.conv2d(norm3, kernel, [1, 1, 1, 1], padding='SAME')
+    biases = _variable_on_cpu('biases', [192], tf.constant_initializer(0.0))
+    pre_activation = tf.nn.bias_add(conv, biases)
+    conv4 = tf.nn.relu(pre_activation, name=scope.name)
     _activation_summary(conv4)
 
-  """ Binarized conv layer 5 """
+  norm4 = tf.nn.lrn(conv4, 4, bias=1.0, alpha=0.001 / 9.0, beta=0.75, name='norm4')
+  
+  """ Conv layer 5 """
   with tf.variable_scope('conv5') as scope:
     kernel = _variable_with_weight_decay('weights',
-					 shape=[3, 3, 192, 192],
+                                         shape=[3, 3, 192, 192],
                                          stddev=5e-2,
                                          wd=0.0)
-    conv5 = binConvolution(conv4, kernel, [1, 1, 1, 1], 'SAME')
+    conv = tf.nn.conv2d(norm4, kernel, [1, 1, 1, 1], padding='SAME')
+    biases = _variable_on_cpu('biases', [192], tf.constant_initializer(0.0))
+    pre_activation = tf.nn.bias_add(conv, biases)
+    conv5 = tf.nn.relu(pre_activation, name=scope.name)
     _activation_summary(conv5)
+
+  norm5 = tf.nn.lrn(conv5, 4, bias=1.0, alpha=0.001 / 9.0, beta=0.75, name='norm5')
 
   """ Binarized conv layer 6 - r = 2"""
   with tf.variable_scope('conv6') as scope:
     kernel = _variable_with_weight_decay('weights',
-					 shape=[3, 3, 192, 192],
+                                         shape=[3, 3, 192, 192],
                                          stddev=5e-2,
                                          wd=0.0)
-    conv6 = binConvolution(conv5, kernel, [1, 2, 2, 1], 'SAME')
+    conv = tf.nn.conv2d(norm5, kernel, [1, 2, 2, 1], padding='SAME')
+    biases = _variable_on_cpu('biases', [192], tf.constant_initializer(0.0))
+    pre_activation = tf.nn.bias_add(conv, biases)
+    conv6 = tf.nn.relu(pre_activation, name=scope.name)
     _activation_summary(conv6)
+
+  norm6 = tf.nn.lrn(conv6, 4, bias=1.0, alpha=0.001 / 9.0, beta=0.75, name='norm6')
 
   """ Binarized conv layer 7 """
   with tf.variable_scope('conv7') as scope:
     kernel = _variable_with_weight_decay('weights',
- 					 shape=[3, 3, 192, 192],
+                                         shape=[3, 3, 192, 192],
                                          stddev=5e-2,
                                          wd=0.0)
-    conv7 = binConvolution(conv6, kernel, [1, 1, 1, 1], 'SAME')
+    conv = tf.nn.conv2d(norm6, kernel, [1, 1, 1, 1], padding='SAME')
+    biases = _variable_on_cpu('biases', [192], tf.constant_initializer(0.0))
+    pre_activation = tf.nn.bias_add(conv, biases)
+    conv7 = tf.nn.relu(pre_activation, name=scope.name)
     _activation_summary(conv7)
+
+  norm7 = tf.nn.lrn(conv7, 4, bias=1.0, alpha=0.001 / 9.0, beta=0.75, name='norm7')
 
   """ fp16 conv layer 8 - 1x1 convolution is a projection """
   with tf.variable_scope('conv8') as scope:

@@ -1,0 +1,2 @@
+precision = .889
+~42000 iterations (better performance with more iterations)

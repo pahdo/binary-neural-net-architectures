@@ -185,7 +185,7 @@ def inputs(eval_data):
   return images, labels
 
 
-def inference(images):
+def inference(images, is_training=True):
   """Build the CIFAR-10 model.
 
   Args:
@@ -202,15 +202,15 @@ def inference(images):
 
   """ Define binary convolution """
 
-  def binConvolution(input, kernel, stride, padding, phase=True):
-    batchnorm = tf.contrib.layers.batch_norm(input, center=True, scale=True, is_training=phase)
+  def binConvolution(input, kernel, stride, padding, is_training):
+    batchnorm = tf.contrib.layers.batch_norm(input, center=True, scale=True, is_training=is_training)
     activ = tf.sign(input) * tf.divide(tf.norm(input, 1), tf.cast(tf.size(input), dtype=tf.float32)) # new + added scaling, added cast
     kernel = tf.sign(kernel) * tf.divide(tf.norm(kernel, 1), tf.cast(tf.size(kernel), dtype=tf.float32)) # new + added scaling, added cast
     conv = tf.nn.conv2d(input, kernel, stride, padding) # conv = tf.nn.conv2d(norm1, kernel, [1, 1, 1, 1], padding='SAME')
     return conv
 
-  def binFullyConnected(reshape, weights, phase=True):
-    batchnorm = tf.contrib.layers.batch_norm(reshape, center=True, scale=True, is_training=phase)
+  def binFullyConnected(reshape, weights, is_training):
+    batchnorm = tf.contrib.layers.batch_norm(reshape, center=True, scale=True, is_training=is_training)
     activ = tf.sign(reshape) * tf.divide(tf.norm(reshape, 1), tf.cast(tf.size(reshape), dtype=tf.float32)) # add scaling
     local = tf.matmul(activ, tf.sign(weights)) * tf.divide(tf.norm(weights, 1), tf.cast(tf.size(weights), dtype=tf.float32)) # added scaling
     return local
@@ -235,7 +235,7 @@ def inference(images):
     kernel = _variable_with_weight_decay('weights', shape=[3, 3, 96, 96],
                                          stddev=5e-2,
                                          wd=0.0)
-    conv2 = binConvolution(norm1, kernel, [1, 1, 1, 1], 'SAME')
+    conv2 = binConvolution(norm1, kernel, [1, 1, 1, 1], 'SAME', is_training)
     _activation_summary(conv2)
 
   """ Binarized conv layer 3 - r = 2"""
@@ -244,7 +244,7 @@ def inference(images):
 					 shape=[3, 3, 96, 96],
                                          stddev=5e-2,
                                          wd=0.0)
-    conv3 = binConvolution(conv2, kernel, [1, 2, 2, 1], 'SAME')
+    conv3 = binConvolution(conv2, kernel, [1, 2, 2, 1], 'SAME', is_training)
     _activation_summary(conv3)
 
   """ Binarized conv layer 4 """
@@ -253,7 +253,7 @@ def inference(images):
 					 shape=[3, 3, 96, 192],
                                          stddev=5e-2,
                                          wd=0.0)
-    conv4 = binConvolution(conv3, kernel, [1, 1, 1, 1], 'SAME')
+    conv4 = binConvolution(conv3, kernel, [1, 1, 1, 1], 'SAME', is_training)
     _activation_summary(conv4)
 
   """ Binarized conv layer 5 """
@@ -262,7 +262,7 @@ def inference(images):
 					 shape=[3, 3, 192, 192],
                                          stddev=5e-2,
                                          wd=0.0)
-    conv5 = binConvolution(conv4, kernel, [1, 1, 1, 1], 'SAME')
+    conv5 = binConvolution(conv4, kernel, [1, 1, 1, 1], 'SAME', is_training)
     _activation_summary(conv5)
 
   """ Binarized conv layer 6 - r = 2"""
@@ -271,7 +271,7 @@ def inference(images):
 					 shape=[3, 3, 192, 192],
                                          stddev=5e-2,
                                          wd=0.0)
-    conv6 = binConvolution(conv5, kernel, [1, 2, 2, 1], 'SAME')
+    conv6 = binConvolution(conv5, kernel, [1, 2, 2, 1], 'SAME', is_training)
     _activation_summary(conv6)
 
   """ Binarized conv layer 7 """
@@ -280,7 +280,7 @@ def inference(images):
  					 shape=[3, 3, 192, 192],
                                          stddev=5e-2,
                                          wd=0.0)
-    conv7 = binConvolution(conv6, kernel, [1, 1, 1, 1], 'SAME')
+    conv7 = binConvolution(conv6, kernel, [1, 1, 1, 1], 'SAME', is_training)
     _activation_summary(conv7)
 
   """ fp16 conv layer 8 - 1x1 convolution is a projection """
